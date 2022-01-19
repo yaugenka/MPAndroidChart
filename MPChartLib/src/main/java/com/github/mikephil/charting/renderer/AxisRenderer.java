@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 
 import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.utils.Transformer;
 import com.github.mikephil.charting.utils.Utils;
 import com.github.mikephil.charting.utils.ViewPortHandler;
@@ -220,7 +221,7 @@ public abstract class AxisRenderer extends Renderer {
      *
      * @param c
      */
-    public abstract void renderAxisLabels(Canvas c);
+    public abstract void renderAxisLabels(Canvas c, Highlight[] indicesToHighlight);
 
     /**
      * Draws the grid lines belonging to the axis.
