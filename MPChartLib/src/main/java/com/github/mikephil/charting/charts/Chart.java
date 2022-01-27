@@ -18,6 +18,10 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore.Images;
 import androidx.annotation.RequiresApi;
+
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -454,7 +458,10 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
                 y = position.y;
             }
 
-            c.drawText(mDescription.getText(), x, y, mDescPaint);
+            for (String line: mDescription.getText().split("\n")) {
+                c.drawText(line, x, y, mDescPaint);
+                y += mDescPaint.descent() - mDescPaint.ascent();
+            }
         }
     }
 
