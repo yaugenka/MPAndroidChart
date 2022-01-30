@@ -422,6 +422,8 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
                 }
             }
 
+            drawDescription(canvas);
+
             return;
         }
 
