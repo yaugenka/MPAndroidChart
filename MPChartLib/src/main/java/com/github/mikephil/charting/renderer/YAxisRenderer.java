@@ -87,23 +87,26 @@ public class YAxisRenderer extends AxisRenderer {
         double rawInterval = range / labelCount;
         double interval = Utils.roundToNextSignificant(rawInterval);
 
-        // If granularity is enabled, then do not allow the interval to go below specified granularity.
-        // This is used to avoid repeated values when rounding values for display.
-        if (mYAxis.isGranularityEnabled())
-            interval = interval < mYAxis.getGranularity() ? mYAxis.getGranularity() : interval;
+        if (!mYAxis.isForceLabelsEnabled()) {
 
-        // Normalize interval
-        double intervalMagnitude = Utils.roundToNextSignificant(Math.pow(10, (int) Math.log10(interval)));
-        int intervalSigDigit = (int) (interval / intervalMagnitude);
-        if (intervalSigDigit > 5) {
-            // Use one order of magnitude higher, to avoid intervals like 0.9 or 90
-            // if it's 0.0 after floor(), we use the old value
-            interval = Math.floor(10.0 * intervalMagnitude) == 0.0
-                    ? interval
-                    : Math.floor(10.0 * intervalMagnitude);
+            // If granularity is enabled, then do not allow the interval to go below specified granularity.
+            // This is used to avoid repeated values when rounding values for display.
+            if (mYAxis.isGranularityEnabled())
+                interval = interval < mYAxis.getGranularity() ? mYAxis.getGranularity() : interval;
+
+            // Normalize interval
+            double intervalMagnitude = Utils.roundToNextSignificant(Math.pow(10, (int) Math.log10(interval)));
+            int intervalSigDigit = (int) (interval / intervalMagnitude);
+            if (intervalSigDigit > 5) {
+                // Use one order of magnitude higher, to avoid intervals like 0.9 or 90
+                // if it's 0.0 after floor(), we use the old value
+                interval = Math.floor(10.0 * intervalMagnitude) == 0.0
+                        ? interval
+                        : Math.floor(10.0 * intervalMagnitude);
+            }
         }
 
-        computeAxisValues(min, max, labelCount, range, interval);
+        computeAxisValues(min, max, interval);
     }
 
     /**

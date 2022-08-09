@@ -126,73 +126,47 @@ public abstract class AxisRenderer extends Renderer {
     protected abstract void computeAxisInterval(float min, float max);
 
     /**
-     * Setup axis entries and decimals based on the previously computed interval and labels count
+     * Setup axis entries and decimals based on the previously computed interval
      * @param min
      * @param max
-     * @param labelCount
-     * @param range
      * @param interval
      */
-    protected void computeAxisValues(float min, float max, int labelCount, double range, double interval) {
-        
+    protected void computeAxisValues(float min, float max, double interval) {
+
         int n = mAxis.isCenterAxisLabelsEnabled() ? 1 : 0;
 
-        // force label count
-        if (mAxis.isForceLabelsEnabled()) {
+        double first = interval == 0.0 ? 0.0 : Math.ceil(min / interval) * interval;
+        if(mAxis.isCenterAxisLabelsEnabled()) {
+            first -= interval;
+        }
 
-            interval = (float) range / (float) (labelCount - 1);
-            mAxis.mEntryCount = labelCount;
+        double last = interval == 0.0 ? 0.0 : Utils.nextUp(Math.floor(max / interval) * interval);
 
-            if (mAxis.mEntries.length < labelCount) {
-                // Ensure stops contains at least numStops elements.
-                mAxis.mEntries = new float[labelCount];
+        double f;
+        int i;
+
+        if (interval != 0.0 && last != first) {
+            for (f = first; f <= last; f += interval) {
+                ++n;
             }
+        }
+        else if (last == first && n == 0) {
+            n = 1;
+        }
 
-            float v = min;
+        mAxis.mEntryCount = n;
 
-            for (int i = 0; i < labelCount; i++) {
-                mAxis.mEntries[i] = v;
-                v += interval;
-            }
+        if (mAxis.mEntries.length < n) {
+            // Ensure stops contains at least numStops elements.
+            mAxis.mEntries = new float[n];
+        }
 
-            n = labelCount;
+        for (f = first, i = 0; i < n; f += interval, ++i) {
 
-            // no forced count
-        } else {
+            if (f == 0.0) // Fix for negative zero case (Where value == -0.0, and 0.0 == -0.0)
+                f = 0.0;
 
-            double first = interval == 0.0 ? 0.0 : Math.ceil(min / interval) * interval;
-            if(mAxis.isCenterAxisLabelsEnabled()) {
-                first -= interval;
-            }
-
-            double last = interval == 0.0 ? 0.0 : Utils.nextUp(Math.floor(max / interval) * interval);
-
-            double f;
-            int i;
-
-            if (interval != 0.0 && last != first) {
-                for (f = first; f <= last; f += interval) {
-                    ++n;
-                }
-            }
-            else if (last == first && n == 0) {
-                n = 1;
-            }
-
-            mAxis.mEntryCount = n;
-
-            if (mAxis.mEntries.length < n) {
-                // Ensure stops contains at least numStops elements.
-                mAxis.mEntries = new float[n];
-            }
-
-            for (f = first, i = 0; i < n; f += interval, ++i) {
-
-                if (f == 0.0) // Fix for negative zero case (Where value == -0.0, and 0.0 == -0.0)
-                    f = 0.0;
-
-                mAxis.mEntries[i] = (float) f;
-            }
+            mAxis.mEntries[i] = (float) f;
         }
 
         // set decimals
@@ -210,7 +184,7 @@ public abstract class AxisRenderer extends Renderer {
 
             float offset = (float)interval / 2f;
 
-            for (int i = 0; i < n; i++) {
+            for (i = 0; i < n; i++) {
                 mAxis.mCenteredEntries[i] = mAxis.mEntries[i] + offset;
             }
         }
