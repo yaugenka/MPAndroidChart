@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.animation.AnimationUtils;
 
 import com.github.mikephil.charting.charts.BarLineChartBase;
@@ -96,26 +97,16 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
     @Override
     public boolean onTouch(View v, MotionEvent event) {
 
-        if (mVelocityTracker == null) {
-            mVelocityTracker = VelocityTracker.obtain();
-        }
-        mVelocityTracker.addMovement(event);
-
-        if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
-            if (mVelocityTracker != null) {
-                mVelocityTracker.recycle();
-                mVelocityTracker = null;
-            }
-        }
-
         if (mTouchMode == NONE) {
             mGestureDetector.onTouchEvent(event);
         }
 
         // Handle touch events here...
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+        switch (event.getActionMasked()) {
 
             case MotionEvent.ACTION_DOWN:
+                mVelocityTracker = VelocityTracker.obtain();
+                mVelocityTracker.addMovement(event);
 
                 startAction(event);
 
@@ -161,6 +152,7 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                 break;
 
             case MotionEvent.ACTION_MOVE:
+                mVelocityTracker.addMovement(event);
 
                 if (mTouchMode == DRAG) {
 
@@ -204,16 +196,15 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
 
             case MotionEvent.ACTION_UP:
 
-                final VelocityTracker velocityTracker = mVelocityTracker;
-                final int pointerId = event.getPointerId(0);
-                velocityTracker.computeCurrentVelocity(1000, Utils.getMaximumFlingVelocity());
-                final float velocityY = velocityTracker.getYVelocity(pointerId);
-                final float velocityX = velocityTracker.getXVelocity(pointerId);
+                if (mTouchMode == DRAG && mChart.isDragDecelerationEnabled()) {
+                    final VelocityTracker velocityTracker = mVelocityTracker;
+                    final int pointerId = event.getPointerId(0);
+                    velocityTracker.computeCurrentVelocity(1000, Utils.getMaximumFlingVelocity());
+                    final float velocityY = velocityTracker.getYVelocity(pointerId);
+                    final float velocityX = velocityTracker.getXVelocity(pointerId);
 
-                if (Math.abs(velocityX) > Utils.getMinimumFlingVelocity() ||
-                        Math.abs(velocityY) > Utils.getMinimumFlingVelocity()) {
-
-                    if (mTouchMode == DRAG && mChart.isDragDecelerationEnabled()) {
+                    if (Math.abs(velocityX) > Utils.getMinimumFlingVelocity() ||
+                            Math.abs(velocityY) > Utils.getMinimumFlingVelocity()) {
 
                         stopDeceleration();
 
@@ -228,9 +219,7 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                         Utils.postInvalidateOnAnimation(mChart); // This causes computeScroll to fire, recommended for this by
                         // Google
                     }
-                }
-
-                if (mChart.isScaleEnabled() && mTouchMode == X_ZOOM ||
+                } else if (mChart.isScaleEnabled() && mTouchMode == X_ZOOM ||
                         mTouchMode == Y_ZOOM ||
                         mTouchMode == PINCH_ZOOM ||
                         mTouchMode == POST_ZOOM) {
@@ -261,16 +250,21 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
 
             case MotionEvent.ACTION_CANCEL:
 
+                if (mVelocityTracker != null) {
+                    mVelocityTracker.recycle();
+                    mVelocityTracker = null;
+                }
+
                 mTouchMode = NONE;
                 endAction(event);
                 break;
         }
 
-
-        if (mChart.isDragEnabled() || mChart.isScaleEnabled()) {
-            // perform the transformation, update the chart
+        // perform the transformation, update the chart
+        if (mTouchMode != NONE) {
             mMatrix = mChart.getViewPortHandler().refresh(mMatrix, mChart, true);
         }
+
         return true; // indicate event was handled
     }
 
