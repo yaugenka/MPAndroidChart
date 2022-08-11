@@ -206,8 +206,6 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                     if (Math.abs(velocityX) > Utils.getMinimumFlingVelocity() ||
                             Math.abs(velocityY) > Utils.getMinimumFlingVelocity()) {
 
-                        stopDeceleration();
-
                         mDecelerationLastTime = AnimationUtils.currentAnimationTimeMillis();
 
                         mDecelerationCurrentPoint.x = event.getX();
@@ -261,9 +259,8 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
         }
 
         // perform the transformation, update the chart
-        if (mTouchMode != NONE) {
-            mMatrix = mChart.getViewPortHandler().refresh(mMatrix, mChart, true);
-        }
+        if (mTouchMode != NONE)
+            mChart.getViewPortHandler().refresh(mMatrix, mChart, true);
 
         return true; // indicate event was handled
     }
@@ -659,11 +656,21 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
         performDrag(event, dragDistanceX, dragDistanceY);
 
         event.recycle();
-        mMatrix = mChart.getViewPortHandler().refresh(mMatrix, mChart, false);
+
+        final float[] matrixBuffer = new float[9];
+        mMatrix.getValues(matrixBuffer);
+        float transX = matrixBuffer[Matrix.MTRANS_X];
+        float transY = matrixBuffer[Matrix.MTRANS_Y];
+
+        mChart.getViewPortHandler().refresh(mMatrix, mChart, false);
 
         mDecelerationLastTime = currentTime;
 
-        if (Math.abs(mDecelerationVelocity.x) >= 0.01 || Math.abs(mDecelerationVelocity.y) >= 0.01)
+        // Continue until the deceleration velocity minimum
+        // or while the translation is applied in full, which means it is within the bounds
+        float min = 0.01f;
+        if ((Math.abs(mDecelerationVelocity.x) >= min && transX == mChart.getViewPortHandler().getTransX())
+                || (Math.abs(mDecelerationVelocity.y) >= min && transY == mChart.getViewPortHandler().getTransY()))
             Utils.postInvalidateOnAnimation(mChart); // This causes computeScroll to fire, recommended for this by Google
         else {
             // Range might have changed, which means that Y-axis labels

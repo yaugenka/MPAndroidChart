@@ -432,7 +432,7 @@ public class ViewPortHandler {
     }
 
     /**
-     * limits the maximum scale and X translation of the given matrix
+     * limits the maximum scale and translation of the given matrix
      *
      * @param matrix
      */
